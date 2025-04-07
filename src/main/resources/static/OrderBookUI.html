@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE ORDER BOOK : Trade Orders WebSocket</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+
+<h1>Market Data Generator</h1>
+
+<button id="startMarketData">Start Market Data Generation</button>
+
+<script>
+    document.getElementById("startMarketData").addEventListener("click", function () {
+        fetch("http://localhost:8080/api/market/simulation/start", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => response.text())
+            .then(data => {
+                alert(data); // Show success message
+            })
+            .catch(error => {
+                console.error("Error starting order generation:", error);
+                alert("Failed to start order generation.");
+            });
+    });
+</script>
+
+<button id="stopMarketData">Stop Market Data Generation</button>
+
+<script>
+    document.getElementById("stopMarketData").addEventListener("click", function () {
+        fetch("http://localhost:8080/api/market/simulation/stop", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => response.text())
+            .then(data => {
+                alert(data); // Show success message
+            })
+            .catch(error => {
+                console.error("Error stopping order generation:", error);
+                alert("Failed to start order generation.");
+            });
+    });
+</script>
+
+
+
+<h1>Market Data</h1>
+
+
+<p id="recordCount">Market Data Records Processed: 0</p>
+<div id="marketData-container2">
+    <ul id="marketData"></ul>
+</div>
+<style>
+    #marketData-container2 {
+        width: 100%;
+        height: 300px;
+        overflow-y: scroll;
+        border: 1px solid #ddd;
+        padding: 10px;
+        box-sizing: border-box;
+        margin-top: 20px;
+    }
+
+    #marketData-container2 ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+</style>
+
+
+<script>
+    // Connect to the WebSocket endpoint
+    const socket = new SockJS('http://localhost:8080/ws');
+    const stompClient = Stomp.over(socket);
+
+    // Initialize a counter
+    let marketDataCounter = 0;
+
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+
+        stompClient.subscribe('/topic/marketData', function(message) {
+            const marketData = message.body;
+            const marketDataList = document.getElementById('marketData');
+            const listItem = document.createElement('li');
+            listItem.textContent = marketData;
+            marketDataList.appendChild(listItem);
+
+            // Increment the counter
+            marketDataCounter++;
+            // Update the counter on the webpage
+            document.getElementById('recordCount').textContent =
+                ` ${marketDataCounter}`;
+        });
+    });
+</script>
+</body>
+</html>
